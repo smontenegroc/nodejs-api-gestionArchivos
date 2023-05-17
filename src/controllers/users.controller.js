@@ -1,4 +1,5 @@
 import { pool } from "../db.js"
+import bcrypt from 'bcrypt';
 
 
 export const getUsers = async (req, res) => {
@@ -32,12 +33,15 @@ export const createUser = async (req, res) => {
   
     try {
       const [existingUsers] = await pool.query('SELECT * FROM users WHERE username = ?',[username]);
+      const saltRounds = 10
   
       if (existingUsers.length > 0) {
         return res.json('El nombre de usuario no está disponible');
       }
+
+      const passwordHash = await bcrypt.hash(password, saltRounds);
   
-      const [rows] = await pool.query('INSERT INTO users (fullname, username, password, roleId) VALUES (?, ?, ?, ?)', [fullname, username, password, roleId]);
+      const [rows] = await pool.query('INSERT INTO users (fullname, username, password, roleId) VALUES (?, ?, ?, ?)', [fullname, username, passwordHash, roleId]);
       res.send({
         id: rows.insertId,
         fullname,
