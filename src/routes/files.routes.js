@@ -6,6 +6,7 @@ const router = Router()
 
 router.get('/files', getFiles)
 router.get('/files/:id', getFile)
-router.post('/files', verifyToken , upload.single('file'), uploadFile)
+// router.post('/files', verifyToken , upload.single('file'), uploadFile)
+router.post('/files', uploadFile)
 
 export default router

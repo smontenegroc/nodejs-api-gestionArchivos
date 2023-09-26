@@ -7,12 +7,13 @@ export const signIn = async (req, res) => {
 
     const {username, password} = req.body
 
-    const [existingUser] = await pool.query('SELECT id, username, password, roleId FROM users WHERE username = ?', [username]);
+    const [existingUser] = await pool.query('SELECT id, username, password, fullname, roleId FROM users WHERE username = ?', [username]);
 
     if (existingUser.length > 0) {
         const dbpassword = existingUser[0].password;
         const userId = existingUser[0].id;
         const roleId = existingUser[0].roleId;
+        const fullname = existingUser[0].fullname;
   
         // Comparar la contraseña enviada con la almacenada
         const passwordMatch = await bcrypt.compare(password, dbpassword);
@@ -20,7 +21,7 @@ export const signIn = async (req, res) => {
         if (passwordMatch) {
             // La contraseña coincide
             const token = jwt.sign({id: userId}, SECRET, {expiresIn: 86400})
-            return res.json({status: "ok", token, roleId});
+            return res.json({status: "ok", token, roleId, fullname});
         } else {
             // La contraseña no coincide
             return res.json({status: "error", message: 'La contraseña no coincide'});

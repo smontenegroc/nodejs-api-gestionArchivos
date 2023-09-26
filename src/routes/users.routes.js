@@ -7,6 +7,7 @@ const router = Router()
 router.get('/users', [verifyToken, isAdmin], getUsers)
 router.get('/users/:username', [verifyToken, isAdmin], getUser)
 router.post('/users', [verifyToken, isAdmin], createUser)
+router.post('/users', createUser)
 router.patch('/users/:id', [verifyToken, isAdmin] ,updateUser)
 router.delete('/users/:id', [verifyToken, isAdmin] ,deleteUser)
 

@@ -32,22 +32,30 @@ export const createUser = async (req, res) => {
     const { fullname, username, password, roleId } = req.body;
   
     try {
-      const [existingUsers] = await pool.query('SELECT * FROM users WHERE username = ?',[username]);
-      const saltRounds = 10
-  
-      if (existingUsers.length > 0) {
-        return res.json('El nombre de usuario no está disponible');
-      }
 
-      const passwordHash = await bcrypt.hash(password, saltRounds);
+    const [existingUsers] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
+    const saltRounds = 10
+    
   
-      const [rows] = await pool.query('INSERT INTO users (fullname, username, password, roleId) VALUES (?, ?, ?, ?)', [fullname, username, passwordHash, roleId]);
-      res.send({
-        id: rows.insertId,
-        fullname,
-        username,
-        roleId
-      });
+    if (existingUsers.length > 0) {
+    return res.json('El nombre de usuario no está disponible');
+    }
+
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    try {
+        const [rows] = await pool.query('INSERT INTO users (fullname, username, password, roleId) VALUES (?, ?, ?, ?)', [fullname, username, passwordHash, roleId]);
+        res.send({
+            id: rows.insertId,
+            fullname,
+            username,
+            roleId
+        });
+    } catch (error) {
+        res.json(error)
+    }
+  
+    
     } catch (error) {
       return res.status(500).json({
         message: 'Something goes wrong',
@@ -86,8 +94,7 @@ export const deleteUser = async (req, res) => {
         if(result.affectedRows <= 0) return res.status(404).json({
             message: 'User not found'
         })
-    
-        res.sendStatus(204)        
+        return res.status(202).json({message: 'user deleted'})        
     } catch (error) {
         return res.status(500).json({
             message: 'Something goes wrong'

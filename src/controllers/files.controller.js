@@ -1,5 +1,7 @@
 import { pool } from '../db.js';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
+import { SECRET } from '../config.js';
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -15,8 +17,13 @@ export  const upload = multer({ storage });
 
 
 export const getFiles = async (req, res) => {
+    
+    const token = req.headers["x-access-token"]
+    const decodedToken = jwt.verify(token, SECRET)
+    const userId = decodedToken.id
+
     try {
-        const [rows] = await pool.query('SELECT * FROM files')
+        const [rows] = await pool.query('SELECT f.id, f.filename, f.description, f.isFolder, f.folderId, f.typeFile FROM files f JOIN permissions p ON p.fileId = f.id JOIN users u ON u.id = p.userId WHERE u.id = ?;', [userId])
         res.json(rows)
     } catch (error) {
         return res.status(500).json({
@@ -42,39 +49,19 @@ export const getFile = async (req, res) => {
 }
 
 export const uploadFile = async(req, res) => {
-    const { description } = req.body;
-    const { filename } = req.file;
-    const typeFile = filename.split('.').pop();
+    const { filename,description, isFolder, folderId, typeFile, uploadedBy } = req.body;
+    // const { filename } = req.file;
+    // const typeFile = filename.split('.').pop();
 
     try {
-        const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, typeFile) VALUES (?, ?, 1, ?)', [filename, description, typeFile])
-        res.send({
-            id: rows.insertId,
-            filename
+        const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, folderId, typeFile, uploadedBy) VALUES (?, ?, ?, ?, ?, ?)', [filename, description, isFolder, folderId, typeFile, uploadedBy])
+        res.json({
+            message: 'Archivo subido exitosamente'
           });
     } catch (error) {
         return res.status(500).json({
             message: 'Something goes wrong'
         })
     }
-  
-    const message = 'Archivo subido exitosamente';
-  
-    res.json({ message });
   }
-
-
-  export const createFolder = async (req, res) => {
-    const { filename, description, folderId } = req.body
-
-    try {
-        const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, folderId, typeFile) VALUES (?, ?, 0,?, folder)', [filename, description, folderId, typeFile])
-
-    } catch (error) {
-        return res.status(500).json({
-            message: 'Something goes wrong'
-        })
-    }
-  }
-  
 
