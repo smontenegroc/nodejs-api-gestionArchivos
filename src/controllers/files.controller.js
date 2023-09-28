@@ -2,17 +2,10 @@ import { pool } from '../db.js';
 import multer from 'multer';
 import jwt from 'jsonwebtoken';
 import { SECRET } from '../config.js';
+import  fs  from 'node:fs'
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-      cb(null, file.originalname);
-    }
-  });
 
-export  const upload = multer({ storage });
+export const upload = multer({ dest: 'uploads/', encoding: 'utf-8' });
 
 
 
@@ -48,20 +41,38 @@ export const getFile = async (req, res) => {
     }
 }
 
-export const uploadFile = async(req, res) => {
-    const { filename,description, isFolder, folderId, typeFile, uploadedBy } = req.body;
+// export const uploadFile = async(req, res) => {
+//     const { filename,description, isFolder, folderId, typeFile, uploadedBy } = req.body;
     // const { filename } = req.file;
     // const typeFile = filename.split('.').pop();
 
-    try {
-        const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, folderId, typeFile, uploadedBy) VALUES (?, ?, ?, ?, ?, ?)', [filename, description, isFolder, folderId, typeFile, uploadedBy])
-        res.json({
-            message: 'Archivo subido exitosamente'
-          });
-    } catch (error) {
-        return res.status(500).json({
-            message: 'Something goes wrong'
-        })
-    }
-  }
+//     try {
+//         const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, folderId, typeFile, uploadedBy) VALUES (?, ?, ?, ?, ?, ?)', [filename, description, isFolder, folderId, typeFile, uploadedBy])
+//         res.json({
+//             message: 'Archivo subido exitosamente'
+//           });
+//     } catch (error) {
+//         return res.status(500).json({
+//             message: 'Something goes wrong'
+//         })
+//     }
+//   }
 
+export const uploadFile = async(req, res) => {
+    console.log(req.file)
+    saveFile(req.file)
+    res.send('Finaliza')
+}
+
+async function saveFile(file) {
+    const newPath = `./uploads/${file.originalname}`
+    fs.renameSync(file.path, newPath)
+    // try {
+    //     const {rows} = await pool.query('')
+    // } catch (error) {
+    //     return res.status(500).json({
+    //         message: 'Something goes wrong'
+    //     })
+    // }
+    return newPath
+}
