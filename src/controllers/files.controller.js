@@ -16,7 +16,7 @@ export const getFiles = async (req, res) => {
     const userId = decodedToken.id
 
     try {
-        const [rows] = await pool.query('SELECT f.id, f.filename, f.description, f.isFolder, f.folderId, f.typeFile FROM files f JOIN permissions p ON p.fileId = f.id JOIN users u ON u.id = p.userId WHERE u.id = ?;', [userId])
+        const [rows] = await pool.query('SELECT * FROM files')
         res.json(rows)
     } catch (error) {
         return res.status(500).json({
@@ -28,7 +28,7 @@ export const getFiles = async (req, res) => {
 export const getFile = async (req, res) => {
     const {id} = req.params
     try {
-        const [rows] = await pool.query('SELECT * FROM files WHERE id = ?', [id])
+        const [rows] = await pool.query('SELECT * FROM files')
         if(rows <= 0)return res.status(404).json({
             message: 'File not found'
         })
@@ -42,37 +42,39 @@ export const getFile = async (req, res) => {
 }
 
 // export const uploadFile = async(req, res) => {
-//     const { filename,description, isFolder, folderId, typeFile, uploadedBy } = req.body;
-    // const { filename } = req.file;
-    // const typeFile = filename.split('.').pop();
+//     console.log(req.file)
+//     console.log('-------------')
+    // const respu = await saveFile(req.file, req.body)
+    // console.log(req.body)
+// }
 
-//     try {
-//         const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, folderId, typeFile, uploadedBy) VALUES (?, ?, ?, ?, ?, ?)', [filename, description, isFolder, folderId, typeFile, uploadedBy])
-//         res.json({
-//             message: 'Archivo subido exitosamente'
-//           });
-//     } catch (error) {
-//         return res.status(500).json({
-//             message: 'Something goes wrong'
-//         })
-//     }
-//   }
+// async function saveFile(file, info) {
+    // const { description, isFolder, folderId } = info;
+    
+    // const filename = file.originalname;
+    // const typeFile = file.mimetype;
 
-export const uploadFile = async(req, res) => {
-    console.log(req.file)
-    saveFile(req.file)
-    res.send('Finaliza')
-}
+    // const responseObject = {
+    //     filename,
+    //     description,
+    //     isFolder,
+    //     folderId,
+    //     typeFile
+    // };
 
-async function saveFile(file) {
-    const newPath = `./uploads/${file.originalname}`
-    fs.renameSync(file.path, newPath)
+    // const jsonResponse = JSON.stringify(info);
+
+    // return jsonResponse;
+
+
+    // const newPath = `./uploads/${filename}`
+    // fs.renameSync(file.path, newPath)
     // try {
-    //     const {rows} = await pool.query('')
+    //     const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, folderId, typeFile) VALUES (?, ?, ?, ?, ?, ?)', [filename, description, isFolder, folderId, typeFile, uploadedBy])
     // } catch (error) {
     //     return res.status(500).json({
     //         message: 'Something goes wrong'
     //     })
     // }
-    return newPath
-}
+    // return newPath
+// }
