@@ -7,8 +7,6 @@ import  fs  from 'node:fs'
 
 export const upload = multer({ dest: 'uploads/', encoding: 'utf-8' });
 
-
-
 export const getFiles = async (req, res) => {
     
     const token = req.headers["x-access-token"]
@@ -75,6 +73,27 @@ export const uploadFile = async(req, res) => {
     } 
 }
 
+export const downloadFile = async (req, res) => {
+    const code = req.params.code
+    const response = await getFileByCode(code)
+    const filename = response.filename
+
+    if (!filename) {
+        return res.status(404).json({
+            message: 'Archivo no encontrado'
+        });
+    }
+
+    const routeFile = `./uploads/${filename}`
+
+    res.download(routeFile, (err) => {
+        if(err) {
+            res.status(404).send({message: 'Archivo no encontrado'})
+        }
+    })
+}
+
+
 function createFileCode () {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     let code = ''
@@ -84,4 +103,19 @@ function createFileCode () {
         code += characters.charAt(indexRamdon)
     }
     return code
+}
+
+async function getFileByCode(code) {
+    try {
+        const [rows] = await pool.query('SELECT filename FROM files WHERE code = ?', [code]);
+
+        if (rows.length <= 0) {
+            return { filename: null };
+        }
+
+        return { filename: rows[0].filename };
+    } catch (error) {
+        console.error(error);
+        throw new Error('Error en el proceso');
+    }
 }
