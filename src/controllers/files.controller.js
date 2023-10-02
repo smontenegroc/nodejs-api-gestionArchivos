@@ -26,9 +26,9 @@ export const getFiles = async (req, res) => {
 }
 
 export const getFile = async (req, res) => {
-    const {id} = req.params
+    const {code} = req.params
     try {
-        const [rows] = await pool.query('SELECT * FROM files')
+        const [rows] = await pool.query('SELECT * FROM files WHERE code = ?', [code])
         if(rows <= 0)return res.status(404).json({
             message: 'File not found'
         })
@@ -41,40 +41,47 @@ export const getFile = async (req, res) => {
     }
 }
 
-// export const uploadFile = async(req, res) => {
-//     console.log(req.file)
-//     console.log('-------------')
-    // const respu = await saveFile(req.file, req.body)
-    // console.log(req.body)
-// }
-
-// async function saveFile(file, info) {
-    // const { description, isFolder, folderId } = info;
+export const uploadFile = async(req, res) => {
     
-    // const filename = file.originalname;
-    // const typeFile = file.mimetype;
+    const {description, isFolder, uploadedBy} = req.body
+    const {originalname, mimetype, path} = req.file
+    const code = createFileCode()
 
-    // const responseObject = {
-    //     filename,
-    //     description,
-    //     isFolder,
-    //     folderId,
-    //     typeFile
-    // };
+    const folderId = req.body.folderId ? req.body.folderId: null
 
-    // const jsonResponse = JSON.stringify(info);
+    const newPath = `./uploads/${originalname}`
+    fs.renameSync(path, newPath)
 
-    // return jsonResponse;
+    try {
+        const row = pool.query('INSERT INTO files (filename, code, description, isFolder, folderId, typeFile, uploadedBy) VALUES (?, ?, ?, ?, ?, ?, ?)', [originalname, code, description, isFolder, folderId, mimetype, uploadedBy])
 
+        if(row){
+            res.send({
+                message: 'Archivo subido'
+            })            
+        }
+        else{
+            res.send({
+                message: 'Error al subir el archivo'
+            })  
+        }
 
-    // const newPath = `./uploads/${filename}`
-    // fs.renameSync(file.path, newPath)
-    // try {
-    //     const {rows} = await pool.query('INSERT INTO files (filename, description, isFolder, folderId, typeFile) VALUES (?, ?, ?, ?, ?, ?)', [filename, description, isFolder, folderId, typeFile, uploadedBy])
-    // } catch (error) {
-    //     return res.status(500).json({
-    //         message: 'Something goes wrong'
-    //     })
-    // }
-    // return newPath
-// }
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: 'Ya existe un archivo con el mismo nombre.' });
+        }      
+        console.error(error);
+        res.status(500).json({ message: 'Error interno del servidor.' });
+    } 
+}
+
+function createFileCode () {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+    let code = ''
+    
+    for(let i = 0; i < 20; i++){
+        const indexRamdon = Math.floor(Math.random() * characters.length)
+        code += characters.charAt(indexRamdon)
+    }
+    return code
+}
