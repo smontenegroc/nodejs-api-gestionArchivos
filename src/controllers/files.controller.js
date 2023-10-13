@@ -93,7 +93,6 @@ export const downloadFile = async (req, res) => {
     })
 }
 
-
 function createFileCode () {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
     let code = ''
@@ -119,3 +118,5 @@ async function getFileByCode(code) {
         throw new Error('Error en el proceso');
     }
 }
+
+
